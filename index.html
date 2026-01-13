@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Serious Study Series – Accountancy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root{
+  --bg:#eef2ff;
+  --card:rgba(255,255,255,0.85);
+  --text:#0f172a;
+  --accent:#4f46e5;
+  --success:#16a34a;
+}
+.dark{
+  --bg:#020617;
+  --card:rgba(2,6,23,0.85);
+  --text:#e5e7eb;
+  --accent:#22d3ee;
+}
+*{box-sizing:border-box;font-family:Poppins,Segoe UI,sans-serif;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  transition:.3s;
+}
+header{
+  padding:20px;
+  text-align:center;
+}
+h1{
+  margin:5px 0;
+  letter-spacing:2px;
+}
+.quote{
+  font-style:italic;
+  opacity:.8;
+}
+.topbar{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:15px;
+}
+.stat,button{
+  background:var(--card);
+  padding:10px 16px;
+  border-radius:14px;
+  border:none;
+  font-weight:600;
+  backdrop-filter:blur(10px);
+}
+button{
+  cursor:pointer;
+  background:var(--accent);
+  color:white;
+}
+main{
+  max-width:900px;
+  margin:auto;
+  padding:20px;
+}
+.task{
+  background:var(--card);
+  padding:16px;
+  margin-bottom:12px;
+  border-radius:16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  animation:fadeUp .4s ease;
+}
+.task.done{
+  border-left:6px solid var(--success);
+}
+.task.locked{opacity:.4;}
+.progress{
+  height:10px;
+  background:#c7d2fe;
+  border-radius:10px;
+  overflow:hidden;
+  margin-top:10px;
+}
+.progress div{
+  height:100%;
+  background:var(--accent);
+  transition:.4s;
+}
+.timer-box{
+  background:var(--card);
+  padding:20px;
+  border-radius:20px;
+  text-align:center;
+  margin-top:25px;
+}
+.timer{
+  font-size:42px;
+  font-weight:700;
+}
+.modal{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.6);
+}
+.modal-content{
+  background:var(--card);
+  padding:25px;
+  border-radius:20px;
+  text-align:center;
+  animation:scaleIn .4s ease;
+}
+@keyframes scaleIn{
+  from{transform:scale(.7);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+@keyframes fadeUp{
+  from{transform:translateY(20px);opacity:0}
+  to{transform:translateY(0);opacity:1}
+}
+footer{text-align:center;opacity:.6;padding:15px;}
+</style>
+</head>
+
+<body>
+<header>
+<h1>SERIOUS STUDY SERIES</h1>
+<p class="quote" id="quote"></p>
+
+<div class="topbar">
+  <div class="stat">🔥 Streak: <span id="streak">0</span></div>
+  <div class="stat">📊 <span id="percent">0</span>%</div>
+  <button onclick="toggleDark()">Exam Mode</button>
+  <button onclick="toggleFocus()">Focus Mode</button>
+</div>
+
+<div class="progress"><div id="bar"></div></div>
+</header>
+
+<main id="tasks"></main>
+
+<div class="timer-box">
+<h2>Pomodoro</h2>
+<div class="timer" id="timer">30:00</div>
+<button onclick="startTimer(30)">30m</button>
+<button onclick="startTimer(45)">45m</button>
+<button onclick="startTimer(60)">60m</button>
+<button onclick="startTimer(90)">90m</button>
+<button onclick="mute=!mute">🔊</button>
+</div>
+
+<footer>
+Built by Piyush Pandey • Discipline > Motivation
+</footer>
+
+<!-- Congrats -->
+<div class="modal" id="congrats">
+<div class="modal-content">
+<h2>🎉 Congratulations!</h2>
+<p>Consistency creates success.<br>You are becoming unstoppable.</p>
+<button onclick="closeModal()">Continue</button>
+</div>
+</div>
+
+<script>
+const quotes=[
+"Discipline is choosing between what you want now and what you want most.",
+"Small progress daily leads to big results.",
+"Consistency beats talent every single time.",
+"Today’s effort is tomorrow’s confidence.",
+"Study like it’s your duty. Win like it’s your destiny."
+];
+document.getElementById("quote").innerText=quotes[new Date().getDate()%quotes.length];
+
+const startDay=12,endDay=30,today=new Date().getDate();
+let data=JSON.parse(localStorage.getItem("study"))||{};
+let tasks=document.getElementById("tasks");
+
+for(let d=startDay;d<=endDay;d++){
+ let t=document.createElement("div");
+ t.className="task";
+ let work=d<=15?"Revision":"Sample Paper";
+ t.innerHTML=`<div><b>Day ${d}</b> – ${work}</div>`;
+ let c=document.createElement("input");
+ c.type="checkbox";
+ if(d>today)t.classList.add("locked");
+ if(data[d]){c.checked=true;t.classList.add("done");}
+ c.onchange=()=>{
+   if(d!==today)return alert("Only today's task allowed.");
+   data[d]=true;
+   localStorage.setItem("study",JSON.stringify(data));
+   playBell();
+   document.getElementById("congrats").style.display="flex";
+ };
+ t.appendChild(c);
+ tasks.appendChild(t);
+}
+
+let completed=Object.values(data).filter(v=>v).length;
+let total=endDay-startDay+1;
+document.getElementById("percent").innerText=Math.round(completed/total*100);
+document.getElementById("bar").style.width=document.getElementById("percent").innerText+"%";
+
+let streak=0;
+for(let i=today;i>=startDay;i--){if(data[i])streak++;else break;}
+document.getElementById("streak").innerText=streak;
+
+let timerInt, mute=false;
+function startTimer(min){
+ clearInterval(timerInt);
+ let s=min*60;
+ timerInt=setInterval(()=>{
+  document.getElementById("timer").innerText=
+  String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+  if(s--<=0){clearInterval(timerInt);playBell();}
+ },1000);
+}
+
+function playBell(){
+ if(mute)return;
+ new Audio("https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3").play();
+}
+function toggleDark(){document.body.classList.toggle("dark");}
+function toggleFocus(){document.body.classList.toggle("dark");}
+function closeModal(){document.getElementById("congrats").style.display="none";}
+</script>
+</body>
+</html>
